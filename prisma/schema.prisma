@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Member{
+  id Int @id @default(autoincrement())
+  code String @unique @db.VarChar(10)
+  name String @db.VarChar(100)
+  created_at Int
+  updated_at Int
+
+  borrow Borrow[]
+  penalty Penalty[]
+
+  @@map("members")
+}
+
+model Book{
+  id Int @id @default(autoincrement())
+  code String @unique @db.VarChar(10)
+  title String @db.VarChar(100)
+  author String @db.VarChar(100)
+  stock Int 
+  is_borrowed Boolean @default(false)
+  created_at Int
+  updated_at Int
+
+  borrow Borrow[]
+
+  @@map("books")
+}
+
+model Borrow{
+  id Int @id @default(autoincrement())
+  member_id Int
+  book_id Int
+  borrow_date Int
+  return_date Int?
+  status Int // 0: borrowed, 1: returned
+  member Member @relation(fields: [member_id], references: [id])
+  book Book @relation(fields: [book_id], references: [id])
+
+
+  @@map("borrows")
+}
+
+model Penalty {
+  id           String   @id @default(uuid())
+  member_id    Int
+  start_date   Int
+  end_date     Int
+  member       Member   @relation(fields: [member_id], references: [id])
+
+  @@map("penalties")
+}
