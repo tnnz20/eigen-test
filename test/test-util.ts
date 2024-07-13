@@ -108,4 +108,8 @@ export class BookTest {
     static async deleteAll() {
         await prismaClient.book.deleteMany();
     }
+
+    static async deleteAllBorrow() {
+        await prismaClient.borrow.deleteMany();
+    }
 }
