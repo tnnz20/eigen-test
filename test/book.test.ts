@@ -36,3 +36,33 @@ describe("POST /api/v1/books", () => {
         expect(response.body.message).toEqual(SuccessResponseAPI.Created);
     });
 });
+
+describe("GET /api/v1/books", () => {
+    beforeAll(async () => {
+        await BookTest.createMany();
+    });
+
+    afterAll(async () => {
+        await BookTest.deleteAll();
+    });
+
+    it("should get all books", async () => {
+        const response = await supertest(app).get("/api/v1/books");
+
+        console.log(response.body.data);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toBeDefined();
+        expect(response.body.paging).toBeDefined();
+    });
+
+    it("should get all books with query", async () => {
+        const response = await supertest(app).get(
+            "/api/v1/books?title=Book Title"
+        );
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toBeDefined();
+        expect(response.body.paging).toBeDefined();
+    });
+});
