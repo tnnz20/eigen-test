@@ -4,6 +4,7 @@ import { ResponseError } from "../error/response-error";
 import {
     ErrorBadRequest,
     ErrorInternalServerError,
+    ErrorNotFound,
 } from "../response/response";
 
 function customizeZodError(error: ZodError) {
@@ -25,7 +26,11 @@ export async function errorMiddleware(
         const customizeError = `Validation Error: ${customizeZodError(error)}`;
         ErrorBadRequest(res, customizeError);
     } else if (error instanceof ResponseError) {
-        ErrorBadRequest(res, error.message);
+        if (error.code === 400) {
+            ErrorBadRequest(res, error.message);
+        } else if (error.code === 404) {
+            ErrorNotFound(res, error.message);
+        }
     } else {
         ErrorInternalServerError(res, error.message);
     }
