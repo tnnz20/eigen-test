@@ -64,4 +64,48 @@ export class BookTest {
             },
         });
     }
+
+    static async createMany() {
+        await prismaClient.book.createMany({
+            data: [
+                {
+                    code: "B-001",
+                    title: "Book Title",
+                    author: "Book Author",
+                    stock: 1,
+                    created_at: new Date().getTime(),
+                    updated_at: new Date().getTime(),
+                },
+                {
+                    code: "B-002",
+                    title: "Book Title 2",
+                    author: "Book Author 2",
+                    stock: 0,
+                    is_borrowed: true,
+                    created_at: new Date().getTime(),
+                    updated_at: new Date().getTime(),
+                },
+                {
+                    code: "B-003",
+                    title: "Book Title 3",
+                    author: "Book Author 3",
+                    stock: 1,
+                    created_at: new Date().getTime(),
+                    updated_at: new Date().getTime(),
+                },
+                {
+                    code: "B-004",
+                    title: "Book Title 4",
+                    author: "Book Author 4",
+                    stock: 1,
+                    created_at: new Date().getTime(),
+                    updated_at: new Date().getTime(),
+                },
+            ],
+        });
+    }
+
+    static async deleteAll() {
+        await prismaClient.book.deleteMany();
+    }
 }
