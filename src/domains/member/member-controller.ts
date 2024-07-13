@@ -1,7 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import { CreateMemberRequest } from "./member";
+import { CreateMemberRequest, GetMembersRequest } from "./member";
 import { MemberService } from "./member-service";
-import { SuccessCreated, SuccessOk } from "../../response/response";
+import {
+    SuccessCreated,
+    SuccessOk,
+    SuccessOkWithPagination,
+} from "../../response/response";
 
 export class MemberController {
     static async create(req: Request, res: Response, next: NextFunction) {
@@ -35,9 +39,16 @@ export class MemberController {
 
     static async getMembers(req: Request, res: Response, next: NextFunction) {
         try {
-            const members = await MemberService.getMembers();
+            const request: GetMembersRequest = {
+                code: req.query.code as string,
+                name: req.query.name as string,
+                page: req.query.page ? Number(req.query.page) : 1,
+                size: req.query.size ? Number(req.query.size) : 5,
+            };
 
-            SuccessOk(res, members);
+            const members = await MemberService.getMembers(request);
+
+            SuccessOkWithPagination(res, members.data, members.paging);
         } catch (error) {
             next(error);
         }
