@@ -17,3 +17,5 @@ publicRouter
     .route("/api/v1/books")
     .post(BookController.create)
     .get(BookController.getBooks);
+
+publicRouter.route("/api/v1/books/borrow").post(BookController.borrowBook);
