@@ -17,6 +17,13 @@ export function SuccessOk(res: Response, data: any) {
     });
 }
 
+export function SuccessOkNoData(res: Response, message: string) {
+    res.status(200).json({
+        message: message,
+        code: 200,
+    });
+}
+
 export function SuccessOkWithPagination(
     res: Response,
     data: any,
