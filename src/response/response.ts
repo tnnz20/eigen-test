@@ -1,5 +1,6 @@
 import { Response } from "express";
 import { ErrorResponseAPI, SuccessResponseAPI } from "./response_constant";
+import { Paging } from "../domains/paging/page";
 
 export function SuccessCreated(res: Response) {
     res.status(201).json({
@@ -13,6 +14,19 @@ export function SuccessOk(res: Response, data: any) {
         message: SuccessResponseAPI.Ok,
         code: 200,
         data,
+    });
+}
+
+export function SuccessOkWithPagination(
+    res: Response,
+    data: any,
+    paging: Paging
+) {
+    res.status(200).json({
+        message: SuccessResponseAPI.Ok,
+        code: 200,
+        data,
+        paging,
     });
 }
 
