@@ -1,3 +1,5 @@
+import { Book } from "@prisma/client";
+
 export type BookResponse = {
     id: number;
     code: string;
@@ -24,3 +26,22 @@ export type GetBooksRequest = {
     page: number;
     size: number;
 };
+
+export type BorrowBookRequest = {
+    memberCode: string;
+    bookCode?: string;
+    title?: string;
+};
+
+export function toBookResponse(book: Book): BookResponse {
+    return {
+        id: book.id,
+        code: book.code,
+        title: book.title,
+        author: book.author,
+        stock: book.stock,
+        is_borrowed: book.is_borrowed,
+        created_at: Number(book.created_at),
+        updated_at: Number(book.updated_at),
+    };
+}
