@@ -1,0 +1,15 @@
+-- AlterTable
+ALTER TABLE "books" ALTER COLUMN "created_at" SET DATA TYPE BIGINT,
+ALTER COLUMN "updated_at" SET DATA TYPE BIGINT;
+
+-- AlterTable
+ALTER TABLE "borrows" ALTER COLUMN "borrow_date" SET DATA TYPE BIGINT,
+ALTER COLUMN "return_date" SET DATA TYPE BIGINT;
+
+-- AlterTable
+ALTER TABLE "members" ALTER COLUMN "created_at" SET DATA TYPE BIGINT,
+ALTER COLUMN "updated_at" SET DATA TYPE BIGINT;
+
+-- AlterTable
+ALTER TABLE "penalties" ALTER COLUMN "start_date" SET DATA TYPE BIGINT,
+ALTER COLUMN "end_date" SET DATA TYPE BIGINT;

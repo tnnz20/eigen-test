@@ -17,8 +17,8 @@ model Member{
   id Int @id @default(autoincrement())
   code String @unique @db.VarChar(10)
   name String @db.VarChar(100)
-  created_at Int
-  updated_at Int
+  created_at BigInt
+  updated_at BigInt
 
   borrow Borrow[]
   penalty Penalty[]
@@ -33,8 +33,8 @@ model Book{
   author String @db.VarChar(100)
   stock Int 
   is_borrowed Boolean @default(false)
-  created_at Int
-  updated_at Int
+  created_at BigInt
+  updated_at BigInt
 
   borrow Borrow[]
 
@@ -45,8 +45,8 @@ model Borrow{
   id Int @id @default(autoincrement())
   member_id Int
   book_id Int
-  borrow_date Int
-  return_date Int?
+  borrow_date BigInt
+  return_date BigInt?
   status Int // 0: borrowed, 1: returned
   member Member @relation(fields: [member_id], references: [id])
   book Book @relation(fields: [book_id], references: [id])
@@ -58,8 +58,8 @@ model Borrow{
 model Penalty {
   id           String   @id @default(uuid())
   member_id    Int
-  start_date   Int
-  end_date     Int
+  start_date   BigInt
+  end_date     BigInt
   member       Member   @relation(fields: [member_id], references: [id])
 
   @@map("penalties")
