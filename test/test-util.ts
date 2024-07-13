@@ -42,3 +42,26 @@ export class MemberTest {
         await prismaClient.member.deleteMany();
     }
 }
+
+export class BookTest {
+    static async delete() {
+        await prismaClient.book.delete({
+            where: {
+                code: "B-001",
+            },
+        });
+    }
+
+    static async create() {
+        await prismaClient.book.create({
+            data: {
+                code: "B-001",
+                title: "Book Title",
+                author: "Book Author",
+                stock: 1,
+                created_at: new Date().getTime(),
+                updated_at: new Date().getTime(),
+            },
+        });
+    }
+}
