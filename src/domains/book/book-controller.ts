@@ -37,4 +37,22 @@ export class BookController {
             next(error);
         }
     }
+
+    static async borrowBook(req: Request, res: Response, next: NextFunction) {
+        try {
+            const memberCode = req.body.memberCode;
+            const bookCode = req.body.bookCode;
+            const title = req.body.title;
+
+            await BookService.BorrowBook({
+                memberCode,
+                bookCode,
+                title,
+            });
+
+            SuccessCreated(res);
+        } catch (error) {
+            next(error);
+        }
+    }
 }

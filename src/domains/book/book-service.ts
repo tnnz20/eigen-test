@@ -4,7 +4,13 @@ import { ResponseError } from "../../error/response-error";
 import { BookValidation } from "../../validation/book-validation";
 import { Validation } from "../../validation/validation";
 import { Pageable } from "../paging/page";
-import { BookResponse, CreateBookRequest, GetBooksRequest } from "./book";
+import {
+    BookResponse,
+    BorrowBookRequest,
+    CreateBookRequest,
+    GetBooksRequest,
+    toBookResponse,
+} from "./book";
 
 export class BookService {
     static async create(request: CreateBookRequest) {
@@ -102,16 +108,7 @@ export class BookService {
         }
         return {
             data: books.map((book) => {
-                return {
-                    id: book.id,
-                    code: book.code,
-                    title: book.title,
-                    author: book.author,
-                    stock: book.stock,
-                    is_borrowed: book.is_borrowed,
-                    created_at: Number(book.created_at),
-                    updated_at: Number(book.updated_at),
-                };
+                return toBookResponse(book);
             }),
             paging: {
                 current_page: getBooksRequest.page,
@@ -119,5 +116,85 @@ export class BookService {
                 size: getBooksRequest.size,
             },
         };
+    }
+
+    static async checkBookMustExist(code?: string, title?: string) {
+        if (code) {
+            const book = await prismaClient.book.findFirst({
+                where: {
+                    code: code,
+                },
+            });
+            if (!book) {
+                throw new ResponseError(404, "Book not found");
+            }
+            return toBookResponse(book);
+        }
+
+        if (title) {
+            const book = await prismaClient.book.findFirst({
+                where: {
+                    title: title,
+                },
+            });
+            if (!book) {
+                throw new ResponseError(404, "Book not found");
+            }
+            return toBookResponse(book);
+        }
+    }
+
+    static async BorrowBook(request: BorrowBookRequest) {
+        const borrowRequest = Validation.validate(
+            BookValidation.BORROW_BOOK,
+            request
+        );
+
+        const member = await prismaClient.member.findFirst({
+            where: {
+                code: borrowRequest.memberCode,
+            },
+        });
+
+        if (!member) {
+            throw new ResponseError(404, "Member not found");
+        }
+
+        const bookRequest = borrowRequest.bookCode
+            ? borrowRequest.bookCode
+            : borrowRequest.title;
+
+        const book = await this.checkBookMustExist(bookRequest);
+
+        if (book?.is_borrowed) {
+            throw new ResponseError(400, "Book is already borrowed");
+        }
+
+        const unixDate = new Date().getTime();
+
+        await prismaClient.$transaction(async (tx) => {
+            // Lock the book row for update
+            const lockedBook = await tx.$queryRaw<
+                BookResponse[]
+            >`SELECT * FROM "books" WHERE id = ${book?.id} FOR UPDATE`;
+
+            const bookData = lockedBook[0]; // Access the first element of the array
+
+            // Update the book stock and borrow status
+            await tx.book.update({
+                where: { id: bookData.id },
+                data: { stock: { decrement: 1 }, is_borrowed: true },
+            });
+
+            // Create a new borrow record
+            await tx.borrow.create({
+                data: {
+                    member_id: member.id,
+                    book_id: bookData.id,
+                    borrow_date: unixDate,
+                    status: 0,
+                },
+            });
+        });
     }
 }
