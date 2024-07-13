@@ -9,8 +9,11 @@ import {
     BorrowBookRequest,
     CreateBookRequest,
     GetBooksRequest,
+    ReturnBookRequest,
     toBookResponse,
 } from "./book";
+import { MemberResponse } from "../member/member";
+import { isOverdue, calculatePenaltyExpirationDate } from "../../helpers/utils";
 
 export class BookService {
     static async create(request: CreateBookRequest) {
@@ -123,6 +126,7 @@ export class BookService {
             const book = await prismaClient.book.findFirst({
                 where: {
                     code: code,
+                    is_borrowed: false,
                 },
             });
             if (!book) {
@@ -135,6 +139,7 @@ export class BookService {
             const book = await prismaClient.book.findFirst({
                 where: {
                     title: title,
+                    is_borrowed: false,
                 },
             });
             if (!book) {
@@ -144,20 +149,61 @@ export class BookService {
         }
     }
 
+    static async checkMemberMustExist(code: string) {
+        const member = await prismaClient.member.findFirst({
+            where: {
+                code: code,
+            },
+        });
+
+        if (!member) {
+            throw new ResponseError(404, "Member not found");
+        }
+
+        const response: MemberResponse = {
+            id: member.id,
+            code: member.code,
+            name: member.name,
+            created_at: Number(member.created_at),
+            updated_at: Number(member.updated_at),
+        };
+        return response;
+    }
+
     static async BorrowBook(request: BorrowBookRequest) {
         const borrowRequest = Validation.validate(
             BookValidation.BORROW_BOOK,
             request
         );
 
-        const member = await prismaClient.member.findFirst({
+        const member = await this.checkMemberMustExist(
+            borrowRequest.memberCode
+        );
+
+        // check if member has penalty
+        const penalties = await prismaClient.penalty.findFirst({
             where: {
-                code: borrowRequest.memberCode,
+                member_id: member.id,
             },
         });
 
-        if (!member) {
-            throw new ResponseError(404, "Member not found");
+        if (penalties) {
+            throw new ResponseError(400, "Member has penalty");
+        }
+
+        // check if member has reached the maximum borrow limit 2
+        const totalBorrowedBooks = await prismaClient.borrow.count({
+            where: {
+                member_id: member.id,
+                status: 0,
+            },
+        });
+
+        if (totalBorrowedBooks >= 2) {
+            throw new ResponseError(
+                400,
+                "Member has reached the maximum borrow limit"
+            );
         }
 
         const bookRequest = borrowRequest.bookCode
@@ -196,5 +242,72 @@ export class BookService {
                 },
             });
         });
+    }
+
+    static async returnBook(request: ReturnBookRequest) {
+        const returnBookRequest = Validation.validate(
+            BookValidation.RETURN_BOOK,
+            request
+        );
+
+        const member = await this.checkMemberMustExist(
+            returnBookRequest.memberCode
+        );
+
+        let isPenalty: boolean = false;
+        const book = await this.checkBookMustExist(returnBookRequest.bookCode);
+
+        await prismaClient.$transaction(async (tx) => {
+            // change borrow status to returned
+            const borrowed = await tx.borrow.findFirst({
+                where: {
+                    member_id: member.id,
+                    book_id: book?.id,
+                    status: 0,
+                },
+            });
+
+            if (!borrowed) {
+                throw new ResponseError(400, "Book is not borrowed by member");
+            }
+
+            await tx.borrow.update({
+                where: {
+                    id: borrowed.id,
+                },
+                data: {
+                    status: 1,
+                    return_date: new Date().getTime(),
+                },
+            });
+
+            // update book stock and is_borrowed status
+            await tx.book.update({
+                where: {
+                    id: book?.id,
+                },
+                data: {
+                    stock: { increment: 1 },
+                    is_borrowed: false,
+                },
+            });
+
+            // check if book is overdue
+            if (isOverdue(Number(borrowed.borrow_date))) {
+                isPenalty = true;
+                const expirationDate = calculatePenaltyExpirationDate();
+                await tx.penalty.create({
+                    data: {
+                        member_id: member.id,
+                        start_date: new Date().getTime(),
+                        end_date: expirationDate,
+                    },
+                });
+            }
+        });
+        if (isPenalty) {
+            return "Book returned successfully, but overdue. Penalty applied.";
+        }
+        return "Book returned successfully";
     }
 }

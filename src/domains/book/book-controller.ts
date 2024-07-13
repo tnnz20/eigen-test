@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import {
     SuccessCreated,
+    SuccessOkNoData,
     SuccessOkWithPagination,
 } from "../../response/response";
 import { CreateBookRequest, GetBooksRequest } from "./book";
@@ -51,6 +52,22 @@ export class BookController {
             });
 
             SuccessCreated(res);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async returnBook(req: Request, res: Response, next: NextFunction) {
+        try {
+            const memberCode = req.body.memberCode;
+            const bookCode = req.body.bookCode;
+
+            const returnedResponse = await BookService.returnBook({
+                memberCode,
+                bookCode,
+            });
+
+            SuccessOkNoData(res, returnedResponse);
         } catch (error) {
             next(error);
         }
