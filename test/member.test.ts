@@ -4,8 +4,13 @@ import {
     ErrorResponseAPI,
     SuccessResponseAPI,
 } from "../src/response/response_constant";
+import { MemberTest } from "./test-util";
 
 describe("POST /api/v1/members", () => {
+    afterAll(async () => {
+        await MemberTest.delete();
+    });
+
     it("should reject register new member if request is invalid", async () => {
         const response = await supertest(app).post("/api/v1/members").send({
             code: "",
@@ -36,5 +41,53 @@ describe("POST /api/v1/members", () => {
         expect(response.status).toBe(400);
         expect(response.body.errors).toBeDefined();
         expect(response.body.message).toEqual(ErrorResponseAPI.BadRequest);
+    });
+});
+
+describe("GET /api/v1/members", () => {
+    afterAll(async () => {
+        await MemberTest.delete();
+    });
+
+    it("should reject get all members if no member found", async () => {
+        const response = await supertest(app).get("/api/v1/members");
+
+        expect(response.status).toBe(404);
+        expect(response.body.errors).toBeDefined();
+        expect(response.body.message).toEqual(ErrorResponseAPI.NotFound);
+    });
+
+    it("should get all members", async () => {
+        await MemberTest.create();
+
+        const response = await supertest(app).get("/api/v1/members");
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toBeDefined();
+        expect(response.body.data.length).toBeGreaterThan(0);
+    });
+});
+
+describe("GET /api/v1/members/:memberCode", () => {
+    afterAll(async () => {
+        await MemberTest.delete();
+    });
+
+    it("should reject get member by code if member not found", async () => {
+        const response = await supertest(app).get("/api/v1/members/T-001");
+
+        expect(response.status).toBe(404);
+        expect(response.body.errors).toBeDefined();
+        expect(response.body.message).toEqual(ErrorResponseAPI.NotFound);
+    });
+
+    it("should get member by code", async () => {
+        await MemberTest.create();
+
+        const response = await supertest(app).get("/api/v1/members/T-001");
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toBeDefined();
+        expect(response.body.data.code).toEqual("T-001");
     });
 });
