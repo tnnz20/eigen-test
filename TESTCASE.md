@@ -15,10 +15,10 @@
     - [ ]  The returned book is a book that the member has borrowed
     - [ ]  If the book is returned after more than 7 days, the member will be subject to a penalty. Member with penalty cannot able to borrow the book for 3 days
 - Check the book
-    - [x]  Shows all existing books and quantities
-    - [x]  Books that are being borrowed are not counted
+    - [ ]  Shows all existing books and quantities
+    - [ ]  Books that are being borrowed are not counted
 - Member check
-    - [x]  Shows all existing members
+    - [ ]  Shows all existing members
     - [ ]  The number of books being borrowed by each member
 
 ## Mock Data
