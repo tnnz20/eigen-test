@@ -21,4 +21,9 @@ export class BookValidation {
         bookCode: z.string().min(1).max(10).optional(),
         title: z.string().min(3).max(100).optional(),
     });
+
+    static readonly RETURN_BOOK: ZodType = z.object({
+        memberCode: z.string().min(1).max(10),
+        bookCode: z.string().min(1).max(10),
+    });
 }
