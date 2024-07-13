@@ -11,3 +11,10 @@ export type CreateMemberRequest = {
     code: string;
     name: string;
 };
+
+export type GetMembersRequest = {
+    code?: string;
+    name?: string;
+    page: number;
+    size: number;
+};
