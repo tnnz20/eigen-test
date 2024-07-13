@@ -1,8 +1,15 @@
+import { Prisma } from "@prisma/client";
+
 import { prismaClient } from "../../applications/database";
 import { ResponseError } from "../../error/response-error";
 import { MemberValidation } from "../../validation/member-validation";
 import { Validation } from "../../validation/validation";
-import { CreateMemberRequest, MemberResponse } from "./member";
+import { Pageable } from "../paging/page";
+import {
+    CreateMemberRequest,
+    GetMembersRequest,
+    MemberResponse,
+} from "./member";
 
 export class MemberService {
     static async create(request: CreateMemberRequest) {
@@ -36,7 +43,7 @@ export class MemberService {
         });
     }
 
-    static async getMemberByCode(code: string): Promise<MemberResponse> {
+    static async checkMemberMustExist(code: string) {
         const member = await prismaClient.member.findFirst({
             where: {
                 code: code,
@@ -57,19 +64,71 @@ export class MemberService {
         return response;
     }
 
-    static async getMembers(): Promise<MemberResponse[]> {
-        const members = await prismaClient.member.findMany();
+    static async getMemberByCode(code: string): Promise<MemberResponse> {
+        const member = await this.checkMemberMustExist(code);
+        return member;
+    }
 
-        if (members.length === 0) {
-            throw new ResponseError(404, "Members not found");
+    static async getMembers(
+        request: GetMembersRequest
+    ): Promise<Pageable<MemberResponse>> {
+        const getMembersRequest = Validation.validate(
+            MemberValidation.GET_MEMBERS,
+            request
+        );
+
+        const skip = (getMembersRequest.page - 1) * getMembersRequest.size;
+        const filters = [];
+
+        if (getMembersRequest.code) {
+            filters.push({
+                code: {
+                    contains: getMembersRequest.code,
+                    mode: "insensitive" as Prisma.QueryMode,
+                },
+            });
         }
 
-        return members.map((member) => ({
-            id: member.id,
-            code: member.code,
-            name: member.name,
-            created_at: Number(member.created_at),
-            updated_at: Number(member.updated_at),
-        }));
+        if (getMembersRequest.name) {
+            filters.push({
+                name: {
+                    contains: getMembersRequest.name,
+                    mode: "insensitive" as Prisma.QueryMode,
+                },
+            });
+        }
+
+        const members = await prismaClient.member.findMany({
+            where: {
+                AND: filters,
+            },
+            take: getMembersRequest.size,
+            skip: skip,
+        });
+
+        const total = await prismaClient.member.count({
+            where: {
+                AND: filters,
+            },
+        });
+
+        if (members.length === 0) {
+            throw new ResponseError(404, "No member found");
+        }
+
+        return {
+            data: members.map((member) => ({
+                id: member.id,
+                code: member.code,
+                name: member.name,
+                created_at: Number(member.created_at),
+                updated_at: Number(member.updated_at),
+            })),
+            paging: {
+                current_page: getMembersRequest.page,
+                total_page: Math.ceil(total / getMembersRequest.size),
+                size: request.size,
+            },
+        };
     }
 }
