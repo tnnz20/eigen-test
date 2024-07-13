@@ -13,4 +13,7 @@ publicRouter
     .route("/api/v1/members/:memberCode")
     .get(MemberController.getMemberByCode);
 
-publicRouter.route("/api/v1/books").post(BookController.create);
+publicRouter
+    .route("/api/v1/books")
+    .post(BookController.create)
+    .get(BookController.getBooks);
