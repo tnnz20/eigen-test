@@ -15,3 +15,12 @@ export type CreateBookRequest = {
     author: string;
     stock: number;
 };
+
+export type GetBooksRequest = {
+    code?: string;
+    title?: string;
+    author?: string;
+    stock?: number;
+    page: number;
+    size: number;
+};
