@@ -1,7 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
-import { ErrorResponseAPI } from "../constants/constants";
 import { ResponseError } from "../error/response-error";
+import {
+    ErrorBadRequest,
+    ErrorInternalServerError,
+} from "../response/response";
 
 function customizeZodError(error: ZodError) {
     const customErrors = error.errors.map((err) => {
@@ -19,22 +22,11 @@ export async function errorMiddleware(
     next: NextFunction
 ) {
     if (error instanceof ZodError) {
-        res.status(400).json({
-            errors: `Validation Error: ${customizeZodError(error)}`,
-            message: ErrorResponseAPI.BadRequest,
-            code: 400,
-        });
+        const customizeError = `Validation Error: ${customizeZodError(error)}`;
+        ErrorBadRequest(res, customizeError);
     } else if (error instanceof ResponseError) {
-        res.status(error.code).json({
-            errors: error.message,
-            message: ErrorResponseAPI.BadRequest,
-            code: 400,
-        });
+        ErrorBadRequest(res, error.message);
     } else {
-        res.status(500).json({
-            errors: error.message,
-            message: ErrorResponseAPI.InternalServerError,
-            code: 500,
-        });
+        ErrorInternalServerError(res, error.message);
     }
 }
