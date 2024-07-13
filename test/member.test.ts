@@ -46,7 +46,7 @@ describe("POST /api/v1/members", () => {
 
 describe("GET /api/v1/members", () => {
     afterAll(async () => {
-        await MemberTest.delete();
+        await MemberTest.deleteAll();
     });
 
     it("should reject get all members if no member found", async () => {
@@ -58,13 +58,35 @@ describe("GET /api/v1/members", () => {
     });
 
     it("should get all members", async () => {
-        await MemberTest.create();
+        await MemberTest.createMany();
 
         const response = await supertest(app).get("/api/v1/members");
 
         expect(response.status).toBe(200);
         expect(response.body.data).toBeDefined();
         expect(response.body.data.length).toBeGreaterThan(0);
+        expect(response.body.paging).toBeDefined();
+        expect(response.body.paging.total_page).toBeGreaterThan(0);
+    });
+
+    it("should get member by name", async () => {
+        const response = await supertest(app).get("/api/v1/members?name=jan");
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toBeDefined();
+        expect(response.body.data.length).toBeGreaterThan(0);
+        expect(response.body.paging).toBeDefined();
+        expect(response.body.paging.total_page).toBeGreaterThan(0);
+    });
+
+    it("should get member by code", async () => {
+        const response = await supertest(app).get("/api/v1/members?code=T-001");
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toBeDefined();
+        expect(response.body.data.length).toBeGreaterThan(0);
+        expect(response.body.paging).toBeDefined();
+        expect(response.body.paging.total_page).toBeGreaterThan(0);
     });
 });
 
@@ -81,7 +103,7 @@ describe("GET /api/v1/members/:memberCode", () => {
         expect(response.body.message).toEqual(ErrorResponseAPI.NotFound);
     });
 
-    it("should get member by code", async () => {
+    it("should get member by memberCode", async () => {
         await MemberTest.create();
 
         const response = await supertest(app).get("/api/v1/members/T-001");
