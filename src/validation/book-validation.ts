@@ -15,4 +15,10 @@ export class BookValidation {
         size: z.number().int().min(1).positive(),
         page: z.number().int().min(1).positive(),
     });
+
+    static readonly BORROW_BOOK: ZodType = z.object({
+        memberCode: z.string().min(1).max(10),
+        bookCode: z.string().min(1).max(10).optional(),
+        title: z.string().min(3).max(100).optional(),
+    });
 }
