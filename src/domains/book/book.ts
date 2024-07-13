@@ -33,6 +33,11 @@ export type BorrowBookRequest = {
     title?: string;
 };
 
+export type ReturnBookRequest = {
+    memberCode: string;
+    bookCode: string;
+};
+
 export function toBookResponse(book: Book): BookResponse {
     return {
         id: book.id,
