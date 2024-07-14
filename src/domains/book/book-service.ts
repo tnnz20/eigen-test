@@ -255,7 +255,15 @@ export class BookService {
         );
 
         let isPenalty: boolean = false;
-        const book = await this.checkBookMustExist(returnBookRequest.bookCode);
+        const book = await prismaClient.book.findFirst({
+            where: {
+                code: returnBookRequest.bookCode,
+            },
+        });
+
+        if (!book) {
+            throw new ResponseError(404, "Book not found");
+        }
 
         await prismaClient.$transaction(async (tx) => {
             // change borrow status to returned
