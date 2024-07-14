@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Member, Prisma } from "@prisma/client";
 
 import { prismaClient } from "../../applications/database";
 import { ResponseError } from "../../error/response-error";
@@ -116,14 +116,35 @@ export class MemberService {
             throw new ResponseError(404, "No member found");
         }
 
+        const getMembersWithBorrowCounts = async (members: Member[]) => {
+            const getMemberData = async (member: Member) => {
+                const totalBorrowBook = await prismaClient.borrow.count({
+                    where: {
+                        member_id: member.id,
+                        status: 0,
+                    },
+                });
+
+                return {
+                    id: member.id,
+                    code: member.code,
+                    name: member.name,
+                    total_borrow_book: totalBorrowBook,
+                    created_at: Number(member.created_at),
+                    updated_at: Number(member.updated_at),
+                };
+            };
+
+            return Promise.all(members.map(getMemberData));
+        };
+
+        // Usage:
+        const membersWithBorrowCounts = await getMembersWithBorrowCounts(
+            members
+        );
+
         return {
-            data: members.map((member) => ({
-                id: member.id,
-                code: member.code,
-                name: member.name,
-                created_at: Number(member.created_at),
-                updated_at: Number(member.updated_at),
-            })),
+            data: membersWithBorrowCounts,
             paging: {
                 current_page: getMembersRequest.page,
                 total_page: Math.ceil(total / getMembersRequest.size),
